@@ -100,7 +100,6 @@ func (h *Handler) KafkaProducer() {
 	topic := h.config.ProducerTopic
 	for {
 		msg, _ := reader.ReadString('\n')
-		// log.Printf("Produce message: %s", msg)
 		h.producer.Produce(&kafka.Message{
 			TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
 			Value:          []byte(msg),

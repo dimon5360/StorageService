@@ -1,6 +1,6 @@
 {
     "host": "localhost",
-    "producerTopic": "fromdataprocessortopic",
-    "consumerTopic": "todataprocessortopic",
-    "group.id": "mygroup"
+    "producerTopic": "DrinkMapRequestsTopic",
+    "consumerTopic": "DrinkMapResponsesTopic",
+    "group.id": "DrinkMapGroup"
 }

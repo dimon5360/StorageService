@@ -1,0 +1,167 @@
+syntax = "proto3";
+
+package postgres;
+
+option go_package = "app/main/postgres";
+
+import "google/protobuf/timestamp.proto";
+
+service BarMapService {
+
+    // bars api
+    rpc CreateBar(CreateBarRequest) returns (Bar) {}
+    rpc UpdateBar(UpdateBarRequest) returns (Bar) {}
+    rpc DeleteBar(DeleteBarRequest) returns (DeleteBarResponse) {}
+    rpc ListBar(ListBarsRequest) returns (ListBarsResponse) {}
+    rpc GetBar(GetBarRequest) returns (Bar) {}
+
+    // drinks api
+    rpc CreateDrink(CreateDrinkRequest) returns (Drink) {}
+    rpc UpdateDrink(UpdateDrinkRequest) returns (Drink) {}
+    rpc DeleteDrink(DeleteDrinkRequest) returns (DeleteDrinkResponse) {}
+    rpc ListDrink(ListDrinksRequest) returns (ListDrinksResponse) {}
+    rpc GetDrink(GetDrinkRequest) returns (Drink) {}
+
+    // ingredients api
+    rpc CreateIngredient(CreateIngredientRequest) returns (Ingredient) {}
+    rpc UpdateIngredient(UpdateIngredientRequest) returns (Ingredient) {}
+    rpc DeleteIngredient(DeleteIngredientRequest) returns (DeleteIngredientResponse) {}
+}
+
+enum DrinkType {
+    UNDEFINED_DRINK_TYPE = 0;
+    // TODO:
+}
+
+message CreateBarRequest {
+    string id = 1;
+    string title = 2;
+    string address = 3;
+    string description = 4;
+    repeated CreateDrinkRequest drinks = 5;
+}
+
+message UpdateBarRequest {
+    string id = 1;
+    string title = 2;
+    string address = 3;
+    string description = 4;
+    repeated CreateDrinkRequest drinks = 5;
+}
+
+message DeleteBarRequest {
+    string id = 1;
+}
+
+message DeleteBarResponse {
+
+}
+
+message ListBarsRequest {
+    PageFilter page_filter = 1;
+}
+
+message ListBarsResponse {
+    repeated Bar bars = 1;
+}
+
+message GetBarRequest {
+    string id = 1;
+}
+
+message CreateDrinkRequest {
+    string id = 1;
+    string title = 2;
+    int32 price = 3;
+    DrinkType drink_type = 4;
+    string description = 5;
+    string bar_id = 6;
+    repeated CreateIngredientRequest ingredients = 7;
+}
+
+message UpdateDrinkRequest {
+    string id = 1;
+    string title = 2;
+    int32 price = 3;
+    DrinkType drink_type = 4;
+    string description = 5;
+    string bar_id = 6;
+    repeated UpdateIngredientRequest ingredients = 7;
+}
+
+message DeleteDrinkRequest {
+    string id = 1;
+}
+
+message DeleteDrinkResponse {
+
+}
+
+message ListDrinksRequest {
+    PageFilter page_filter = 1;
+}
+
+message ListDrinksResponse {
+    repeated Drink drinks = 1;
+}
+
+message GetDrinkRequest {
+    string id = 1;
+}
+
+message CreateIngredientRequest {
+    string name = 1;
+    string title = 2;
+    int32 amount = 3;
+    string drink_id = 4;
+}
+
+message UpdateIngredientRequest {
+    string id = 1;
+    string title = 2;
+    int32 amount = 3;
+    string drink_id = 4;
+}
+message DeleteIngredientRequest {
+    string id = 1;
+}
+
+message DeleteIngredientResponse {
+
+}
+
+message PageFilter {
+    uint32 limit = 1;
+    uint32 page = 2;
+}
+
+message Bar {
+    string id = 1;
+    string title = 2;
+    string address = 3;
+    string description = 4;
+    repeated Drink drinks = 5;
+    google.protobuf.Timestamp created_at = 6;
+    google.protobuf.Timestamp updated_at = 7;
+}
+
+message Drink {
+    string id = 1;
+    string title = 2;
+    int32 price = 3;
+    DrinkType drink_type = 4;
+    string description = 5;
+    string bar_id = 6;
+    repeated Ingredient ingredients = 7;
+    google.protobuf.Timestamp created_at = 8;
+    google.protobuf.Timestamp updated_at = 9;
+}
+
+message Ingredient {
+    string id = 1;
+    string title = 2;
+    int32 amount = 3;
+    string drink_id = 4;
+    google.protobuf.Timestamp created_at = 5;
+    google.protobuf.Timestamp updated_at = 6;
+}

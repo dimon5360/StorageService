@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"app/main/utils"
+	context "context"
 	"io/ioutil"
 	"log"
 	"os"
@@ -63,4 +64,52 @@ func (h *Handler) ConnectPostgres(conn_config PostgresConfig, initScriptPath str
 	}
 
 	return conn
+}
+
+type barMapService struct {
+	UnimplementedBarMapServiceServer
+
+	connection *pgx.Conn
+	// mu         sync.Mutex // protects routeNotes
+}
+
+func (s *barMapService) CreateBar(ctx context.Context, req *CreateBarRequest) (*Bar, error) {
+	return &Bar{}, nil
+}
+func (s *barMapService) UpdateBar(ctx context.Context, req *UpdateBarRequest) (*Bar, error) {
+	return &Bar{}, nil
+}
+func (s *barMapService) DeleteBar(ctx context.Context, req *DeleteBarRequest) (*DeleteBarResponse, error) {
+	return &DeleteBarResponse{}, nil
+}
+func (s *barMapService) ListBar(ctx context.Context, req *ListBarsRequest) (*ListBarsResponse, error) {
+	return &ListBarsResponse{}, nil
+}
+func (s *barMapService) GetBar(ctx context.Context, req *GetBarRequest) (*Bar, error) {
+	return &Bar{}, nil
+}
+func (s *barMapService) CreateDrink(ctx context.Context, req *CreateDrinkRequest) (*Drink, error) {
+	return &Drink{}, nil
+}
+
+func (s *barMapService) UpdateDrink(ctx context.Context, req *UpdateDrinkRequest) (*Drink, error) {
+	return &Drink{}, nil
+}
+func (s *barMapService) DeleteDrink(ctx context.Context, req *DeleteDrinkRequest) (*DeleteDrinkResponse, error) {
+	return &DeleteDrinkResponse{}, nil
+}
+func (s *barMapService) ListDrink(ctx context.Context, req *ListDrinksRequest) (*ListDrinksResponse, error) {
+	return &ListDrinksResponse{}, nil
+}
+func (s *barMapService) GetDrink(ctx context.Context, req *GetDrinkRequest) (*Drink, error) {
+	return &Drink{}, nil
+}
+func (s *barMapService) CreateIngredient(ctx context.Context, req *CreateIngredientRequest) (*Ingredient, error) {
+	return &Ingredient{}, nil
+}
+func (s *barMapService) UpdateIngredient(ctx context.Context, req *UpdateIngredientRequest) (*Ingredient, error) {
+	return &Ingredient{}, nil
+}
+func (s *barMapService) DeleteIngredient(ctx context.Context, req *DeleteIngredientRequest) (*DeleteIngredientResponse, error) {
+	return &DeleteIngredientResponse{}, nil
 }
