@@ -16,8 +16,16 @@ type appConfig struct {
 	Port int    `json:"port"`
 }
 
+// build v.0.0.2 from 15.08.2022
+const (
+	BUILD = 2
+	MINOR = 0
+	MAJOR = 0
+)
+
 func main() {
-	log.Println("Start postgresql service")
+
+	log.Printf("Start Data Access service v.%d.%d.%d.", MAJOR, MINOR, BUILD)
 
 	var app appConfig
 	utils.ParseJsonConfig("config/server.json", &app)
