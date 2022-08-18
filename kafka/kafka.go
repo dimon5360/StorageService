@@ -2,7 +2,6 @@ package kafka
 
 import (
 	"app/main/utils"
-	"bufio"
 	"fmt"
 	"log"
 	"os"
@@ -54,13 +53,13 @@ func InitKafkaHandler(jsonFileName string) *Handler {
 	return &handler
 }
 
-func (h *Handler) StartKafkaHandler() {
+func (h *Handler) StartKafkaHandler(ConsumeCallback func(string, string)) {
 
-	go h.KafkaConsumer()
-	h.KafkaProducer()
+	go h.StartKafkaConsumer(ConsumeCallback)
+	go h.StartKafkaProducer()
 }
 
-func (h *Handler) KafkaConsumer() {
+func (h *Handler) StartKafkaConsumer(ConsumeCallback func(message string, topic string)) {
 
 	err := h.consumer.Subscribe(h.config.ConsumerTopic, nil)
 	if err != nil {
@@ -71,14 +70,22 @@ func (h *Handler) KafkaConsumer() {
 	for {
 		msg, err := h.consumer.ReadMessage(10 * time.Millisecond)
 		if err == nil {
-			log.Printf("Message on %s: %s\n", msg.TopicPartition, string(msg.Value))
+			// log.Printf("Message on %s: %s\n", msg.TopicPartition, string(msg.Value))
+			ConsumeCallback(msg.TopicPartition.String(), msg.String())
 		} else if err.(kafka.Error).Code() != kafka.ErrTimedOut {
 			log.Printf("Consumer error: %v (%v)\n", err, msg)
 		}
 	}
 }
 
-func (h *Handler) KafkaProducer() {
+func (h *Handler) Produce(message string, topic string) {
+	h.producer.Produce(&kafka.Message{
+		TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
+		Value:          []byte(message),
+	}, nil)
+}
+
+func (h *Handler) StartKafkaProducer() {
 
 	go func() {
 		for e := range h.producer.Events() {
@@ -94,15 +101,4 @@ func (h *Handler) KafkaProducer() {
 			}
 		}
 	}()
-
-	reader := bufio.NewReader(os.Stdin)
-
-	topic := h.config.ProducerTopic
-	for {
-		msg, _ := reader.ReadString('\n')
-		h.producer.Produce(&kafka.Message{
-			TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
-			Value:          []byte(msg),
-		}, nil)
-	}
 }

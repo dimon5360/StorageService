@@ -18,20 +18,34 @@ type PostgresConfig struct {
 	Password string `json:"password"`
 }
 
+type barMapService struct {
+	UnimplementedBarMapServiceServer
+
+	handler *Handler
+	// mu         sync.Mutex // protects routeNotes
+}
 type Handler struct {
 	config *PostgresConfig
 	conn   *pgx.Conn
 }
 
-func InitPostgresHandler(jsonFileName string, initScriptPath string) *Handler {
+func NewServer(jsonFileName string, initScriptPath string) *barMapService {
+
+	handler := initPostgresHandler(jsonFileName, initScriptPath)
+	return &barMapService{
+		handler: handler,
+	}
+}
+
+func initPostgresHandler(jsonFileName string, initScriptPath string) *Handler {
 
 	var handler Handler
 	utils.ParseJsonConfig(jsonFileName, &handler.config)
-	handler.conn = handler.ConnectPostgres(*handler.config, initScriptPath)
+	// handler.conn = connectPostgres(*handler.config, initScriptPath)
 	return &handler
 }
 
-func (h *Handler) ConnectPostgres(conn_config PostgresConfig, initScriptPath string) *pgx.Conn {
+func connectPostgres(conn_config PostgresConfig, initScriptPath string) *pgx.Conn {
 
 	conn, err := pgx.Connect(pgx.ConnConfig{
 		Host:     conn_config.Host,
@@ -47,10 +61,6 @@ func (h *Handler) ConnectPostgres(conn_config PostgresConfig, initScriptPath str
 	}
 
 	log.Println("Connection to database was succeed")
-	defer conn.Close()
-
-	var responce string
-	conn.QueryRow("select * from drinks;").Scan(&responce)
 
 	c, err := ioutil.ReadFile(initScriptPath)
 	if err != nil {
@@ -66,14 +76,8 @@ func (h *Handler) ConnectPostgres(conn_config PostgresConfig, initScriptPath str
 	return conn
 }
 
-type barMapService struct {
-	UnimplementedBarMapServiceServer
-
-	handler *Handler
-	// mu         sync.Mutex // protects routeNotes
-}
-
 func (s *barMapService) CreateBar(ctx context.Context, req *CreateBarRequest) (*Bar, error) {
+	log.Println("Create bar request")
 	return &Bar{}, nil
 }
 func (s *barMapService) UpdateBar(ctx context.Context, req *UpdateBarRequest) (*Bar, error) {

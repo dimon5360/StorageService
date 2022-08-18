@@ -1,23 +1,42 @@
 package main
 
 import (
-	"app/main/kafka"
-	"app/main/postgres"
+	"fmt"
 	"log"
+	"net"
+
+	"app/main/postgres"
+	"app/main/utils"
+
+	"google.golang.org/grpc"
 )
 
-type AppConfig struct {
-	postgresHandler *postgres.Handler
-	kafkaHandler    *kafka.Handler
+type appConfig struct {
+	Host string `json:"host"`
+	Port int    `json:"port"`
 }
+
+// build v.0.0.2 from 15.08.2022
+const (
+	BUILD = 2
+	MINOR = 0
+	MAJOR = 0
+)
 
 func main() {
 
-	var config AppConfig
-	log.Println("Start postgresql connection")
+	log.Printf("Start Data Access service v.%d.%d.%d.", MAJOR, MINOR, BUILD)
 
-	config.postgresHandler = postgres.InitPostgresHandler("config/postgres.json", "config/create_tables.sql")
-	config.kafkaHandler = kafka.InitKafkaHandler("config/kafka.json")
+	var app appConfig
+	utils.ParseJsonConfig("config/server.json", &app)
 
-	config.kafkaHandler.StartKafkaHandler()
+	lis, err := net.Listen("tcp", fmt.Sprintf("%s:%d", app.Host, app.Port))
+	if err != nil {
+		panic(err)
+	}
+	var opts []grpc.ServerOption
+
+	grpcServer := grpc.NewServer(opts...)
+	postgres.RegisterBarMapServiceServer(grpcServer, postgres.NewServer("config/postgres.json", "config/create_tables.sql"))
+	grpcServer.Serve(lis)
 }
