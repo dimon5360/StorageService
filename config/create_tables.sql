@@ -9,7 +9,7 @@ create table if not exists bars (
     title text not null,
     address text not null,
     description text not null,
-    drinks_id int[],
+    drinks_id bigint[],
     created_at timestamp not null,
     updated_at timestamp not null
 );

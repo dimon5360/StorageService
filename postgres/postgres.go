@@ -3,11 +3,14 @@ package postgres
 import (
 	"app/main/utils"
 	context "context"
+	"fmt"
 	"io/ioutil"
 	"log"
-	"os"
+	"time"
 
 	"github.com/jackc/pgx"
+	"github.com/jackc/pgx/pgtype"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type PostgresConfig struct {
@@ -41,7 +44,7 @@ func initPostgresHandler(jsonFileName string, initScriptPath string) *Handler {
 
 	var handler Handler
 	utils.ParseJsonConfig(jsonFileName, &handler.config)
-	// handler.conn = connectPostgres(*handler.config, initScriptPath)
+	handler.conn = connectPostgres(*handler.config, initScriptPath)
 	return &handler
 }
 
@@ -56,11 +59,8 @@ func connectPostgres(conn_config PostgresConfig, initScriptPath string) *pgx.Con
 	})
 
 	if err != nil {
-		log.Printf("Unable to connect to database: %v\n", err)
-		os.Exit(1)
+		panic(err)
 	}
-
-	log.Println("Connection to database was succeed")
 
 	c, err := ioutil.ReadFile(initScriptPath)
 	if err != nil {
@@ -72,13 +72,89 @@ func connectPostgres(conn_config PostgresConfig, initScriptPath string) *pgx.Con
 	if err != nil {
 		panic(err)
 	}
+	log.Println("Connection to database was succeed")
 
 	return conn
 }
 
+func SqlTransaction(ctx context.Context, conn *pgx.Conn, query string) *pgx.Rows {
+
+	tx, err := conn.BeginEx(ctx, nil)
+	if err != nil {
+		log.Println("Failed conn.BeginEx()")
+		return &pgx.Rows{}
+	}
+
+	rows, err := conn.QueryEx(ctx, query, nil)
+	if err != nil {
+		log.Println("Failed conn.Query()")
+		return &pgx.Rows{}
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		tx.Rollback()
+		log.Println("Failed conn.Commit()")
+		return &pgx.Rows{}
+	}
+	return rows
+}
+
 func (s *barMapService) CreateBar(ctx context.Context, req *CreateBarRequest) (*Bar, error) {
-	log.Println("Create bar request")
-	return &Bar{}, nil
+
+	var now = time.Now().Format("2006-01-02 15:04:05.000000")
+
+	GetItemIds := func(Drinks []*CreateDrinkRequest) string {
+		var ids string = "{"
+		for i, drink := range Drinks {
+			ids += drink.Id
+			if i == len(Drinks)-1 {
+				break
+			}
+			ids += ","
+		}
+		ids += "}"
+		return ids
+	}
+
+	var sql string = fmt.Sprintf("insert into bars "+
+		"(title, address, description, drinks_id, created_at, updated_at) "+
+		"values ('%s', '%s', '%s', '%s', '%s', '%s') returning *;",
+		req.Title, req.Address, req.Description, GetItemIds(req.Drinks), now, now)
+
+	rows, err := s.handler.conn.Query(sql)
+	if err != nil {
+		log.Println("Failed sql transaction")
+		return &Bar{}, err
+	}
+
+	var Id uint32
+	var Title string
+	var Address string
+	var Description string
+	var Drinks_Id pgtype.Int4Array
+	var CreatedAt pgtype.Timestamp
+	var UpdatedAt pgtype.Timestamp
+
+	for rows.Next() {
+		err := rows.Scan(&Id, &Title, &Address, &Description, &Drinks_Id, &CreatedAt, &UpdatedAt)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	var drinks []*Drink
+	Drinks_Id.AssignTo(&drinks)
+
+	return &Bar{
+		Id:          fmt.Sprintf("%d", Id),
+		Title:       Title,
+		Address:     Address,
+		Description: Description,
+		Drinks:      drinks,
+		CreatedAt:   timestamppb.New(CreatedAt.Time),
+		UpdatedAt:   timestamppb.New(UpdatedAt.Time),
+	}, nil
 }
 func (s *barMapService) UpdateBar(ctx context.Context, req *UpdateBarRequest) (*Bar, error) {
 	return &Bar{}, nil
