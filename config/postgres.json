@@ -1,7 +1,0 @@
-{
-    "database": "drinksdb",
-    "host": "localhost",
-    "port": 5243,
-    "user":"dboperator",
-    "password": "operatorpass123"
-}
