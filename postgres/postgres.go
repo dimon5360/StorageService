@@ -69,7 +69,7 @@ func (h *Handler) ConnectPostgres(conn_config PostgresConfig, initScriptPath str
 type barMapService struct {
 	UnimplementedBarMapServiceServer
 
-	connection *pgx.Conn
+	handler *Handler
 	// mu         sync.Mutex // protects routeNotes
 }
 
