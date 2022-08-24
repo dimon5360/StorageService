@@ -24,10 +24,10 @@ type PostgresConfig struct {
 type barMapService struct {
 	UnimplementedBarMapServiceServer
 
-	handler *Handler
+	handler *handler
 	// mu         sync.Mutex // protects routeNotes
 }
-type Handler struct {
+type handler struct {
 	config *PostgresConfig
 	conn   *pgx.Conn
 }
@@ -40,9 +40,9 @@ func NewServer(jsonFileName string, initScriptPath string) *barMapService {
 	}
 }
 
-func initPostgresHandler(jsonFileName string, initScriptPath string) *Handler {
+func initPostgresHandler(jsonFileName string, initScriptPath string) *handler {
 
-	var handler Handler
+	var handler handler
 	utils.ParseJsonConfig(jsonFileName, &handler.config)
 	handler.conn = connectPostgres(*handler.config, initScriptPath)
 	return &handler
@@ -75,29 +75,6 @@ func connectPostgres(conn_config PostgresConfig, initScriptPath string) *pgx.Con
 	log.Println("Connection to database was succeed")
 
 	return conn
-}
-
-func SqlTransaction(ctx context.Context, conn *pgx.Conn, query string) *pgx.Rows {
-
-	tx, err := conn.BeginEx(ctx, nil)
-	if err != nil {
-		log.Println("Failed conn.BeginEx()")
-		return &pgx.Rows{}
-	}
-
-	rows, err := conn.QueryEx(ctx, query, nil)
-	if err != nil {
-		log.Println("Failed conn.Query()")
-		return &pgx.Rows{}
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		tx.Rollback()
-		log.Println("Failed conn.Commit()")
-		return &pgx.Rows{}
-	}
-	return rows
 }
 
 func (s *barMapService) CreateBar(ctx context.Context, req *CreateBarRequest) (*Bar, error) {
@@ -166,6 +143,43 @@ func (s *barMapService) ListBar(ctx context.Context, req *ListBarsRequest) (*Lis
 	return &ListBarsResponse{}, nil
 }
 func (s *barMapService) GetBar(ctx context.Context, req *GetBarRequest) (*Bar, error) {
+
+	var sql string = fmt.Sprintf("select * from bars where id = %s;", req.Id)
+
+	rows, err := s.handler.conn.Query(sql)
+	if err != nil {
+		log.Println("Failed sql transaction")
+		return &Bar{}, err
+	}
+
+	var Id uint32
+	var Title string
+	var Address string
+	var Description string
+	var Drinks_Id pgtype.Int4Array
+	var CreatedAt pgtype.Timestamp
+	var UpdatedAt pgtype.Timestamp
+
+	for rows.Next() {
+		err := rows.Scan(&Id, &Title, &Address, &Description, &Drinks_Id, &CreatedAt, &UpdatedAt)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	var drinks []*Drink
+	Drinks_Id.AssignTo(&drinks)
+
+	return &Bar{
+		Id:          fmt.Sprintf("%d", Id),
+		Title:       Title,
+		Address:     Address,
+		Description: Description,
+		Drinks:      drinks,
+		CreatedAt:   timestamppb.New(CreatedAt.Time),
+		UpdatedAt:   timestamppb.New(UpdatedAt.Time),
+	}, nil
+
 	return &Bar{}, nil
 }
 func (s *barMapService) CreateDrink(ctx context.Context, req *CreateDrinkRequest) (*Drink, error) {
