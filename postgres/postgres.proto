@@ -46,7 +46,7 @@ message UpdateBarRequest {
     string title = 2;
     string address = 3;
     string description = 4;
-    repeated CreateDrinkRequest drinks = 5;
+    repeated UpdateDrinkRequest drinks = 5;
 }
 
 message DeleteBarRequest {
@@ -72,7 +72,7 @@ message GetBarRequest {
 message CreateDrinkRequest {
     string id = 1;
     string title = 2;
-    int32 price = 3;
+    string price = 3;
     DrinkType drink_type = 4;
     string description = 5;
     string bar_id = 6;
@@ -82,7 +82,7 @@ message CreateDrinkRequest {
 message UpdateDrinkRequest {
     string id = 1;
     string title = 2;
-    int32 price = 3;
+    string price = 3;
     DrinkType drink_type = 4;
     string description = 5;
     string bar_id = 6;
@@ -110,16 +110,16 @@ message GetDrinkRequest {
 }
 
 message CreateIngredientRequest {
-    string name = 1;
+    string id = 1;
     string title = 2;
-    int32 amount = 3;
+    string amount = 3;
     string drink_id = 4;
 }
 
 message UpdateIngredientRequest {
     string id = 1;
     string title = 2;
-    int32 amount = 3;
+    string amount = 3;
     string drink_id = 4;
 }
 message DeleteIngredientRequest {
@@ -131,8 +131,8 @@ message DeleteIngredientResponse {
 }
 
 message PageFilter {
-    uint32 limit = 1;
-    uint32 page = 2;
+    string limit = 1;
+    string page = 2;
 }
 
 message Bar {
@@ -148,7 +148,7 @@ message Bar {
 message Drink {
     string id = 1;
     string title = 2;
-    int32 price = 3;
+    string price = 3;
     DrinkType drink_type = 4;
     string description = 5;
     string bar_id = 6;
@@ -160,7 +160,7 @@ message Drink {
 message Ingredient {
     string id = 1;
     string title = 2;
-    int32 amount = 3;
+    string amount = 3;
     string drink_id = 4;
     google.protobuf.Timestamp created_at = 5;
     google.protobuf.Timestamp updated_at = 6;
