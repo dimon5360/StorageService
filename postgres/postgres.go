@@ -155,6 +155,8 @@ func (s *barMapService) UpdateBar(ctx context.Context, req *UpdateBarRequest) (*
 		return &Bar{}, err
 	}
 
+	var sql string = "begin transation;"
+
 	GetDrinksIds := func(Drinks []*UpdateDrinkRequest) string {
 		var ids string = "{"
 		for i, drink := range Drinks {
@@ -167,6 +169,10 @@ func (s *barMapService) UpdateBar(ctx context.Context, req *UpdateBarRequest) (*
 		ids += "}"
 		return ids
 	}
+
+	sql += fmt.Sprintf("update bars set title = '%s', address = '%s', description = '%s', drinks_id = '%s', "+
+		"updated_at = '%s' where id = %s returning *;",
+		req.Title, req.Address, req.Description, GetDrinksIds(req.Drinks), now, req.Id)
 
 	rows, err := tx.Query(fmt.Sprintf("update bars set title = '%s', address = '%s', description = '%s', drinks_id = '%s', "+
 		"updated_at = '%s' where id = %s returning *;",
@@ -208,7 +214,6 @@ func (s *barMapService) UpdateBar(ctx context.Context, req *UpdateBarRequest) (*
 				return &Bar{}, err
 			}
 		}
-
 	}
 
 	err = tx.Commit()
@@ -403,7 +408,6 @@ func (s *barMapService) GetDrink(ctx context.Context, req *GetDrinkRequest) (*Dr
 }
 
 // table drinks model and SQL requests
-
 type ingredientModel struct {
 	Id        string
 	Title     string
@@ -440,7 +444,14 @@ func WrapIngredientResponse(rows *pgx.Rows, err error) (*Ingredient, error) {
 	}, nil
 }
 func (s *barMapService) CreateIngredient(ctx context.Context, req *CreateIngredientRequest) (*Ingredient, error) {
-	return &Ingredient{}, nil
+	var now = time.Now().Format("2006-01-02 15:04:05.000000")
+
+	var sql string = fmt.Sprintf("insert into ingredients "+
+		"(title, amount, drink_id, created_at, updated_at) "+
+		"values ('%s', '%s', '%s', '%s', '%s') returning *;",
+		req.Title, req.Amount, req.DrinkId, now, now)
+
+	return WrapIngredientResponse(s.handler.conn.Query(sql))
 }
 
 func (s *barMapService) UpdateIngredient(ctx context.Context, req *UpdateIngredientRequest) (*Ingredient, error) {
