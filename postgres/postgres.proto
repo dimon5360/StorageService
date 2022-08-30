@@ -34,7 +34,7 @@ enum DrinkType {
 }
 
 message CreateBarRequest {
-    string id = 1;
+    // string id = 1;
     string title = 2;
     string address = 3;
     string description = 4;
@@ -70,7 +70,7 @@ message GetBarRequest {
 }
 
 message CreateDrinkRequest {
-    string id = 1;
+    // string id = 1;
     string title = 2;
     string price = 3;
     DrinkType drink_type = 4;
@@ -110,7 +110,7 @@ message GetDrinkRequest {
 }
 
 message CreateIngredientRequest {
-    string id = 1;
+    // string id = 1;
     string title = 2;
     string amount = 3;
     string drink_id = 4;
