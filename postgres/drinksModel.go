@@ -4,7 +4,6 @@ import (
 	context "context"
 	"fmt"
 	"log"
-	"strings"
 	"time"
 
 	"github.com/jackc/pgx"
@@ -25,8 +24,12 @@ type drinkModel struct {
 	UpdatedAt      pgtype.Timestamp
 }
 
-const UNDEFINED_ID int32 = -1
+const (
+	UNDEFINED_ID int32 = -1
+	DEBUG_OUTPUT bool  = false
+)
 
+/// sql response wrapper
 func WrapDrinkResponse(rows *pgx.Rows, err error) (*Drink, error) {
 
 	if err != nil {
@@ -65,11 +68,14 @@ func WrapDrinkResponse(rows *pgx.Rows, err error) (*Drink, error) {
 	}, nil
 }
 
+/// gRPC creating drink request handler
 func (s *BarMapService) CreateDrink(ctx context.Context, req *CreateDrinkRequest) (*Drink, error) {
-	var now = time.Now().Format("2006-01-02 15:04:05.000000")
 
-	insertDrinkScript := fmt.Sprintf("with ids as (INSERT INTO drinks (title, price, type, description, bar_id, ingredients_id, created_at, updated_at) "+
-		" VALUES ('%s', '%s', %d, '%s', '%s', '%s', '%s', '%s') returning *)",
+	var now = time.Now().Format("2006-01-02 15:04:05.000000")
+	
+	insertDrinkScript := "begin transaction;\n"
+	insertDrinkScript += fmt.Sprintf("WITH created_drink AS (INSERT INTO drinks (title, price, type, description, bar_id, ingredients_id, created_at, updated_at) "+
+		"VALUES ('%s', '%s', %d, '%s', '%s', '%s', '%s', '%s') returning *)\n",
 		req.Title, req.Price, req.DrinkType, req.Description, req.BarId, "{}", now, now)
 
 	CreateIngrediendsScript := func(Ingredients []*CreateIngredientRequest, timestamp string) string {
@@ -77,10 +83,10 @@ func (s *BarMapService) CreateDrink(ctx context.Context, req *CreateDrinkRequest
 			"(title, amount, drink_id, created_at, updated_at) VALUES "
 
 		for i, ingrediemt := range Ingredients {
-			tmp += fmt.Sprintf("('%s', '%s', (select ids.id from ids), '%s', '%s')",
+			tmp += fmt.Sprintf("('%s', '%s', (select created_drink.id from created_drink), '%s', '%s')",
 				ingrediemt.Title, ingrediemt.Amount, timestamp, timestamp)
 			if i == len(Ingredients)-1 {
-				tmp += "returning id, drink_id;"
+				tmp += " returning *;\n"
 				break
 			}
 			tmp += ", "
@@ -88,41 +94,23 @@ func (s *BarMapService) CreateDrink(ctx context.Context, req *CreateDrinkRequest
 		return tmp
 	}
 
-	rows, err := s.handler.conn.Query(insertDrinkScript + CreateIngrediendsScript(req.Ingredients, now))
+	insertDrinkScript += CreateIngrediendsScript(req.Ingredients, now)
+	insertDrinkScript += "commit;\n"
+
+	_, err := s.handler.conn.Exec(insertDrinkScript)
 	if err != nil {
-		log.Println("Failed ingredient sql response scan: ", err)
 		return &Drink{}, err
 	}
 
-	IngrediendsIdsParseScript := func(rows *pgx.Rows) (string, int32) {
-		var IngredientId, DrinkId int32
-		var IngredientIds = "ARRAY["
-		for rows.Next() {
-			err := rows.Scan(&IngredientId, &DrinkId)
-			if err != nil {
-				log.Println("Failed ingredient sql response scan: ", err)
-				return "", UNDEFINED_ID
-			}
-			IngredientIds += fmt.Sprintf("%d", IngredientId)
-			IngredientIds += ","
-		}
-		return strings.TrimSuffix(IngredientIds, ",") + "]", DrinkId
-	}
+	insertDrinkScript = fmt.Sprintf("update drinks set ingredients_id = array_cat(ingredients_id, "+
+		"array(select ingredients.id from ingredients where drink_id = (select drinks.id from drinks where title = '%s' AND bar_id = '%s'))) "+
+		"where id = (select drinks.id from drinks where title = '%s' AND bar_id = '%s');\n", req.Title, req.BarId, req.Title, req.BarId)
 
-	val, id := IngrediendsIdsParseScript(rows)
-	if len(val) == 0 || id == UNDEFINED_ID {
-		log.Printf("Results parse failed. Return empty object")
-		return &Drink{}, err
-	}
-
-	var sql = fmt.Sprintf("update drinks set ingredients_id = array_cat(ingredients_id, %s), updated_at = '%s' where id = %d;", val, now, id)
-	_, err = s.handler.conn.Exec(sql)
+	_, err = s.handler.conn.Exec(insertDrinkScript)
 	if err != nil {
-		log.Println("Failed update drink sql transaction: ", err)
 		return &Drink{}, err
 	}
-	// return &Drink{}, err
-	return WrapDrinkResponse(s.handler.conn.Query(fmt.Sprintf("select * from drinks where id = %d;", id)))
+	return WrapDrinkResponse(s.handler.conn.Query(fmt.Sprintf("select * from drinks where title = '%s' AND bar_id = '%s';", req.Title, req.BarId)))
 }
 
 func (s *BarMapService) UpdateDrink(ctx context.Context, req *UpdateDrinkRequest) (*Drink, error) {

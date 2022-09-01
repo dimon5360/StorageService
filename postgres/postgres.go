@@ -22,6 +22,7 @@ type BarMapService struct {
 
 	handler *handler
 }
+
 type handler struct {
 	config *PostgresConfig
 	conn   *pgx.Conn

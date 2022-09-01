@@ -34,11 +34,9 @@ enum DrinkType {
 }
 
 message CreateBarRequest {
-    // string id = 1;
-    string title = 2;
-    string address = 3;
-    string description = 4;
-    repeated CreateDrinkRequest drinks = 5;
+    string title = 1;
+    string address = 2;
+    string description = 3;
 }
 
 message UpdateBarRequest {
@@ -59,6 +57,7 @@ message DeleteBarResponse {
 
 message ListBarsRequest {
     PageFilter page_filter = 1;
+    string address = 2;    
 }
 
 message ListBarsResponse {
@@ -70,13 +69,12 @@ message GetBarRequest {
 }
 
 message CreateDrinkRequest {
-    // string id = 1;
-    string title = 2;
-    string price = 3;
-    DrinkType drink_type = 4;
-    string description = 5;
-    string bar_id = 6;
-    repeated CreateIngredientRequest ingredients = 7;
+    string title = 1;
+    string price = 2;
+    DrinkType drink_type = 3;
+    string description = 4;
+    string bar_id = 5;
+    repeated CreateIngredientRequest ingredients = 6;
 }
 
 message UpdateDrinkRequest {
@@ -99,6 +97,7 @@ message DeleteDrinkResponse {
 
 message ListDrinksRequest {
     PageFilter page_filter = 1;
+    string bar_id = 2;
 }
 
 message ListDrinksResponse {
@@ -110,10 +109,9 @@ message GetDrinkRequest {
 }
 
 message CreateIngredientRequest {
-    // string id = 1;
-    string title = 2;
-    string amount = 3;
-    string drink_id = 4;
+    string title = 1;
+    string amount = 2;
+    string drink_id = 3;
 }
 
 message UpdateIngredientRequest {
