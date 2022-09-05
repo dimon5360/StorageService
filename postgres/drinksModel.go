@@ -72,7 +72,7 @@ func WrapDrinkResponse(rows *pgx.Rows, err error) (*Drink, error) {
 func (s *BarMapService) CreateDrink(ctx context.Context, req *CreateDrinkRequest) (*Drink, error) {
 
 	var now = time.Now().Format("2006-01-02 15:04:05.000000")
-	
+
 	insertDrinkScript := "begin transaction;\n"
 	insertDrinkScript += fmt.Sprintf("WITH created_drink AS (INSERT INTO drinks (title, price, type, description, bar_id, ingredients_id, created_at, updated_at) "+
 		"VALUES ('%s', '%s', %d, '%s', '%s', '%s', '%s', '%s') returning *)\n",
@@ -102,9 +102,14 @@ func (s *BarMapService) CreateDrink(ctx context.Context, req *CreateDrinkRequest
 		return &Drink{}, err
 	}
 
-	insertDrinkScript = fmt.Sprintf("update drinks set ingredients_id = array_cat(ingredients_id, "+
+	insertDrinkScript = "begin transaction;\n"
+	insertDrinkScript += fmt.Sprintf("update drinks set ingredients_id = array_cat(ingredients_id, "+
 		"array(select ingredients.id from ingredients where drink_id = (select drinks.id from drinks where title = '%s' AND bar_id = '%s'))) "+
 		"where id = (select drinks.id from drinks where title = '%s' AND bar_id = '%s');\n", req.Title, req.BarId, req.Title, req.BarId)
+
+	insertDrinkScript += fmt.Sprintf("update bars set drinks_id = array_append(drinks_id, (select drinks.id from drinks where title = '%s' AND bar_id = '%s')) "+
+		"where id = '%s';\n", req.Title, req.BarId, req.BarId)
+	insertDrinkScript += "commit;\n"
 
 	_, err = s.handler.conn.Exec(insertDrinkScript)
 	if err != nil {
