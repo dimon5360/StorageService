@@ -52,7 +52,9 @@ func WrapDrinkResponse(rows *pgx.Rows, err error) (*Drink, error) {
 	model.Ingredients_Id.AssignTo(&ingredients)
 
 	for _, idx := range model.Ingredients_Id.Elements {
-		log.Println(idx.Int)
+		ingredients = append(ingredients, &Ingredient{
+			Id: fmt.Sprintf("%d", idx.Int),
+		})
 	}
 
 	return &Drink{
@@ -62,7 +64,7 @@ func WrapDrinkResponse(rows *pgx.Rows, err error) (*Drink, error) {
 		DrinkType:   model.Type,
 		Description: model.Description,
 		BarId:       fmt.Sprintf("%d", model.BarId),
-		Ingredients: ingredients, // @TODO: fill ingredients
+		Ingredients: ingredients,
 		CreatedAt:   timestamppb.New(model.CreatedAt.Time),
 		UpdatedAt:   timestamppb.New(model.UpdatedAt.Time),
 	}, nil
@@ -104,11 +106,11 @@ func (s *BarMapService) CreateDrink(ctx context.Context, req *CreateDrinkRequest
 
 	insertDrinkScript = "begin transaction;\n"
 	insertDrinkScript += fmt.Sprintf("update drinks set ingredients_id = array_cat(ingredients_id, "+
-		"array(select ingredients.id from ingredients where drink_id = (select drinks.id from drinks where title = '%s' AND bar_id = '%s'))) "+
-		"where id = (select drinks.id from drinks where title = '%s' AND bar_id = '%s');\n", req.Title, req.BarId, req.Title, req.BarId)
+		"array(select ingredients.id from ingredients where drink_id = (select drinks.id from drinks where title = '%s' AND bar_id = '%s'))), updated_at = '%s' "+
+		"where id = (select drinks.id from drinks where title = '%s' AND bar_id = '%s');\n", req.Title, req.BarId, now, req.Title, req.BarId)
 
-	insertDrinkScript += fmt.Sprintf("update bars set drinks_id = array_append(drinks_id, (select drinks.id from drinks where title = '%s' AND bar_id = '%s')) "+
-		"where id = '%s';\n", req.Title, req.BarId, req.BarId)
+	insertDrinkScript += fmt.Sprintf("update bars set drinks_id = array_append(drinks_id, (select drinks.id from drinks where title = '%s' AND bar_id = '%s')), "+
+		"updated_at = '%s' where id = '%s';\n", req.Title, req.BarId, now, req.BarId)
 	insertDrinkScript += "commit;\n"
 
 	_, err = s.handler.conn.Exec(insertDrinkScript)
@@ -118,6 +120,7 @@ func (s *BarMapService) CreateDrink(ctx context.Context, req *CreateDrinkRequest
 	return WrapDrinkResponse(s.handler.conn.Query(fmt.Sprintf("select * from drinks where title = '%s' AND bar_id = '%s';", req.Title, req.BarId)))
 }
 
+/// gRPC updating drink request handler
 func (s *BarMapService) UpdateDrink(ctx context.Context, req *UpdateDrinkRequest) (*Drink, error) {
 	var now = time.Now().Format("2006-01-02 15:04:05.000000")
 
@@ -176,6 +179,7 @@ func (s *BarMapService) UpdateDrink(ctx context.Context, req *UpdateDrinkRequest
 	}, nil
 }
 
+/// gRPC deleting drink request handler
 func (s *BarMapService) DeleteDrink(ctx context.Context, req *DeleteDrinkRequest) (*DeleteDrinkResponse, error) {
 
 	sql := fmt.Sprintf("delete from drinks WHERE id = %s;", req.Id)
@@ -187,11 +191,14 @@ func (s *BarMapService) DeleteDrink(ctx context.Context, req *DeleteDrinkRequest
 	return &DeleteDrinkResponse{}, nil
 }
 
+/// gRPC geting drinks' list request handler
 func (s *BarMapService) ListDrink(ctx context.Context, req *ListDrinksRequest) (*ListDrinksResponse, error) {
 	return &ListDrinksResponse{}, nil
 }
 
+/// gRPC getting drink request handler
 func (s *BarMapService) GetDrink(ctx context.Context, req *GetDrinkRequest) (*Drink, error) {
+
 	var sql string = fmt.Sprintf("select * from drinks where id = %s;", req.Id)
 	return WrapDrinkResponse(s.handler.conn.Query(sql))
 }

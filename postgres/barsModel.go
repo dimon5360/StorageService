@@ -42,7 +42,11 @@ func WrapBarResponse(rows *pgx.Rows, err error) (*Bar, error) {
 	}
 
 	var drinks []*Drink
-	model.Drinks_Id.AssignTo(&drinks)
+	for _, idx := range model.Drinks_Id.Elements {
+		drinks = append(drinks, &Drink{
+			Id: fmt.Sprintf("%d", idx.Int),
+		})
+	}
 
 	return &Bar{
 		Id:          fmt.Sprintf("%d", model.Id),
@@ -129,7 +133,6 @@ func (s *BarMapService) ListBar(ctx context.Context, req *ListBarsRequest) (*Lis
 
 /// gRPC getting bar request handler
 func (s *BarMapService) GetBar(ctx context.Context, req *GetBarRequest) (*Bar, error) {
-
 	var sql string = fmt.Sprintf("select * from bars where id = %s;", req.Id)
 	return WrapBarResponse(s.handler.conn.Query(sql))
 }
