@@ -73,6 +73,7 @@ func (s *BarMapService) CreateBar(ctx context.Context, req *CreateBarRequest) (*
 }
 
 /// gRPC updating bar request handler
+// #TODO: need to replace script and test
 func (s *BarMapService) UpdateBar(ctx context.Context, req *UpdateBarRequest) (*Bar, error) {
 
 	var now = time.Now().Format("2006-01-02 15:04:05.000000")
@@ -127,11 +128,13 @@ func (s *BarMapService) DeleteBar(ctx context.Context, req *DeleteBarRequest) (*
 }
 
 /// gRPC getting bars list request handler
+// #TODO: need to implement script
 func (s *BarMapService) ListBar(ctx context.Context, req *ListBarsRequest) (*ListBarsResponse, error) {
 	return &ListBarsResponse{}, nil
 }
 
 /// gRPC getting bar request handler
+// #TODO: must return bar + drinks, now only bar returns
 func (s *BarMapService) GetBar(ctx context.Context, req *GetBarRequest) (*Bar, error) {
 	var sql string = fmt.Sprintf("select * from bars where id = %s;", req.Id)
 	return WrapBarResponse(s.handler.conn.Query(sql))

@@ -49,8 +49,6 @@ func WrapDrinkResponse(rows *pgx.Rows, err error) (*Drink, error) {
 	}
 
 	var ingredients []*Ingredient
-	model.Ingredients_Id.AssignTo(&ingredients)
-
 	for _, idx := range model.Ingredients_Id.Elements {
 		ingredients = append(ingredients, &Ingredient{
 			Id: fmt.Sprintf("%d", idx.Int),
@@ -71,6 +69,7 @@ func WrapDrinkResponse(rows *pgx.Rows, err error) (*Drink, error) {
 }
 
 /// gRPC creating drink request handler
+/// establish, remove comment later
 func (s *BarMapService) CreateDrink(ctx context.Context, req *CreateDrinkRequest) (*Drink, error) {
 
 	var now = time.Now().Format("2006-01-02 15:04:05.000000")
@@ -121,6 +120,7 @@ func (s *BarMapService) CreateDrink(ctx context.Context, req *CreateDrinkRequest
 }
 
 /// gRPC updating drink request handler
+// #TODO: need to replace script and test
 func (s *BarMapService) UpdateDrink(ctx context.Context, req *UpdateDrinkRequest) (*Drink, error) {
 	var now = time.Now().Format("2006-01-02 15:04:05.000000")
 
@@ -180,6 +180,7 @@ func (s *BarMapService) UpdateDrink(ctx context.Context, req *UpdateDrinkRequest
 }
 
 /// gRPC deleting drink request handler
+// #TODO: need to test
 func (s *BarMapService) DeleteDrink(ctx context.Context, req *DeleteDrinkRequest) (*DeleteDrinkResponse, error) {
 
 	sql := fmt.Sprintf("delete from drinks WHERE id = %s;", req.Id)
@@ -192,11 +193,13 @@ func (s *BarMapService) DeleteDrink(ctx context.Context, req *DeleteDrinkRequest
 }
 
 /// gRPC geting drinks' list request handler
+// #TODO: need to implement
 func (s *BarMapService) ListDrink(ctx context.Context, req *ListDrinksRequest) (*ListDrinksResponse, error) {
 	return &ListDrinksResponse{}, nil
 }
 
 /// gRPC getting drink request handler
+// #TODO: must return drink + ingredients, now only drink returns
 func (s *BarMapService) GetDrink(ctx context.Context, req *GetDrinkRequest) (*Drink, error) {
 
 	var sql string = fmt.Sprintf("select * from drinks where id = %s;", req.Id)
