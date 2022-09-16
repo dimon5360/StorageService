@@ -65,7 +65,6 @@ message ListBarsResponse {
 
 message GetBarRequest {
     string id = 1;
-    bool is_needed_drinks = 2;
 }
 
 message CreateDrinkRequest {
@@ -104,7 +103,6 @@ message ListDrinksResponse {
 
 message GetDrinkRequest {
     string id = 1;
-    bool is_needed_drinks = 2;
 }
 
 message CreateIngredientRequest {
