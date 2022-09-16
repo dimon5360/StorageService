@@ -12,7 +12,7 @@ import (
 )
 
 // table drinks model and SQL requests
-type ingredientModel struct {
+type IngredientModel struct {
 	Id        string
 	Title     string
 	Amount    string
@@ -28,7 +28,7 @@ func WrapIngredientResponse(rows *pgx.Rows, err error) (*Ingredient, error) {
 		return &Ingredient{}, err
 	}
 
-	var model ingredientModel
+	var model IngredientModel
 
 	for rows.Next() {
 		err := rows.Scan(&model.Id, &model.Title, &model.Amount, &model.DrinkId, &model.CreatedAt, &model.UpdatedAt)

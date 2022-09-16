@@ -202,6 +202,63 @@ func (s *BarMapService) ListDrink(ctx context.Context, req *ListDrinksRequest) (
 // #TODO: must return drink + ingredients, now only drink returns
 func (s *BarMapService) GetDrink(ctx context.Context, req *GetDrinkRequest) (*Drink, error) {
 
-	var sql string = fmt.Sprintf("select * from drinks where id = %s;", req.Id)
-	return WrapDrinkResponse(s.handler.conn.Query(sql))
+	var selectDrink string = fmt.Sprintf("select * from drinks where id = %s;", req.Id)
+
+	var selectIngredients = fmt.Sprintf("select * from ingredients where drink_id = %s;", req.Id)
+
+	var rows, err = s.handler.conn.Query(selectIngredients)
+	if err != nil {
+		log.Println("Getting drink's ingredients failed")
+		return &Drink{}, err
+	}
+
+	var ingredients []*Ingredient
+
+	var im IngredientModel
+	for rows.Next() {
+		err := rows.Scan(&im.Id, &im.Title, &im.Amount, &im.DrinkId, &im.CreatedAt, &im.UpdatedAt)
+		if err != nil {
+			log.Println("Failed ingredient sql response scan: ", err)
+			return &Drink{}, err
+		}
+
+		ingredients = append(ingredients, &Ingredient{
+			Id:        im.Id,
+			Title:     im.Title,
+			Amount:    im.Amount,
+			DrinkId:   im.DrinkId,
+			CreatedAt: timestamppb.New(im.CreatedAt.Time),
+			UpdatedAt: timestamppb.New(im.UpdatedAt.Time),
+		})
+	}
+
+	rows, err = s.handler.conn.Query(selectDrink)
+	if err != nil {
+		log.Println("Getting drink failed")
+		return &Drink{}, err
+	}
+
+	var dm drinkModel
+
+	for rows.Next() {
+		err := rows.Scan(&dm.Id, &dm.Title, &dm.Price, &dm.Type, &dm.Description,
+			&dm.BarId, nil, &dm.CreatedAt, &dm.UpdatedAt)
+		if err != nil {
+			log.Println("Failed drink sql response scan: ", err)
+			return &Drink{}, err
+		}
+	}
+
+	return &Drink{
+		Id:          fmt.Sprintf("%d", dm.Id),
+		Title:       dm.Title,
+		Price:       fmt.Sprintf("%d", dm.Price),
+		DrinkType:   dm.Type,
+		Description: dm.Description,
+		BarId:       fmt.Sprintf("%d", dm.BarId),
+		Ingredients: ingredients,
+		CreatedAt:   timestamppb.New(dm.CreatedAt.Time),
+		UpdatedAt:   timestamppb.New(dm.UpdatedAt.Time),
+	}, nil
+
 }
