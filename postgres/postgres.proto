@@ -44,7 +44,6 @@ message UpdateBarRequest {
     string title = 2;
     string address = 3;
     string description = 4;
-    repeated UpdateDrinkRequest drinks = 5;
 }
 
 message DeleteBarRequest {
@@ -84,8 +83,6 @@ message UpdateDrinkRequest {
     string price = 3;
     DrinkType drink_type = 4;
     string description = 5;
-    string bar_id = 6;
-    repeated UpdateIngredientRequest ingredients = 7;
 }
 
 message DeleteDrinkRequest {
@@ -120,7 +117,6 @@ message UpdateIngredientRequest {
     string id = 1;
     string title = 2;
     string amount = 3;
-    string drink_id = 4;
 }
 message DeleteIngredientRequest {
     string id = 1;

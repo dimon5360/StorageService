@@ -24,8 +24,7 @@ create table if not exists drinks (
     bar_id int not null references bars(id) on delete cascade,
     ingredients_id bigint[],
     created_at timestamp not null,
-    updated_at timestamp not null,
-    on update cascade
+    updated_at timestamp not null
 );
 
 --table ingredients
@@ -35,8 +34,7 @@ create table if not exists ingredients (
     amount int not null,
     drink_id int not null references drinks(id) on delete cascade,
     created_at timestamp not null,
-    updated_at timestamp not null,
-    on update cascade
+    updated_at timestamp not null
 );
 
 -- update bars set title = '%s', address = '%s', description = '%s', drinks_id = '%s', "updated_at = '%s' where id = %s;

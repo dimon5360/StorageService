@@ -13,10 +13,10 @@ import (
 
 // table drinks model and SQL requests
 type IngredientModel struct {
-	Id        string
+	Id        int32
 	Title     string
-	Amount    string
-	DrinkId   string
+	Amount    int32
+	DrinkId   int32
 	CreatedAt pgtype.Timestamp
 	UpdatedAt pgtype.Timestamp
 }
@@ -39,55 +39,54 @@ func WrapIngredientResponse(rows *pgx.Rows, err error) (*Ingredient, error) {
 	}
 
 	return &Ingredient{
-		Id:        model.Id,
+		Id:        fmt.Sprintf("%d", model.Id),
 		Title:     model.Title,
-		Amount:    model.Amount,
-		DrinkId:   model.DrinkId,
+		Amount:    fmt.Sprintf("%d", model.Amount),
+		DrinkId:   fmt.Sprintf("%d", model.DrinkId),
 		CreatedAt: timestamppb.New(model.CreatedAt.Time),
 		UpdatedAt: timestamppb.New(model.UpdatedAt.Time),
 	}, nil
 }
+
+/// gRPC creating ingredient request handler
+// #TODO: need to test
 func (s *BarMapService) CreateIngredient(ctx context.Context, req *CreateIngredientRequest) (*Ingredient, error) {
 	var now = time.Now().Format("2006-01-02 15:04:05.000000")
 
-	var sql string = fmt.Sprintf("insert into ingredients "+
+	insertIngredientScript := "begin;\n"
+	insertIngredientScript += fmt.Sprintf("WITH ingredient_id AS (insert into ingredients "+
 		"(title, amount, drink_id, created_at, updated_at) "+
-		"values ('%s', '%s', '%s', '%s', '%s') returning *;",
+		"values ('%s', '%s', '%s', '%s', '%s') returning *);",
 		req.Title, req.Amount, req.DrinkId, now, now)
+	insertIngredientScript += fmt.Sprintf("update drinks set ingredients_id = array_append(ingredients_id, "+
+		"(select ingredient_id.id from ingredient_id) where id = '%s');", req.DrinkId)
+	insertIngredientScript += "commit;\n"
 
-	return WrapIngredientResponse(s.handler.conn.Query(sql))
+	_, err := s.handler.conn.Exec(insertIngredientScript)
+	if err != nil {
+		return &Ingredient{}, err
+	}
+	return WrapIngredientResponse(s.handler.conn.Query(fmt.Sprintf("select * from ingredients where title = '%s' AND drink_id = '%s';", req.Title, req.DrinkId)))
 }
 
+/// gRPC updating ingredient request handler
+// #TODO: need to test
 func (s *BarMapService) UpdateIngredient(ctx context.Context, req *UpdateIngredientRequest) (*Ingredient, error) {
 	var now = time.Now().Format("2006-01-02 15:04:05.000000")
 
-	tx, err := s.handler.conn.BeginEx(ctx, nil)
-	if err != nil {
-		log.Println("Failed ingredient bar update sql transaction: ", err)
-		return &Ingredient{}, err
-	}
-
-	var sql = fmt.Sprintf("update ingredients set title = '%s', amount = '%s', drink_id = '%s', updated_at = '%s' where id = %s returning *;",
-		req.Title, req.Amount, req.DrinkId, now, req.Id)
-	ingredient, err := WrapIngredientResponse(tx.Query(sql))
-
-	if err != nil {
-		log.Println("Updating ingredient failed: ", err)
-		return &Ingredient{}, err
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		tx.Rollback()
-		log.Println("Commiting Ingredient's update transaction failed. Roolback performed: ", err)
-		return &Ingredient{}, err
-	}
-
-	return ingredient, nil
+	var sql = fmt.Sprintf("update ingredients set title = '%s', amount = '%s', updated_at = '%s' where id = %s returning *;",
+		req.Title, req.Amount, now, req.Id)
+	return WrapIngredientResponse(s.handler.conn.Query(sql))
 }
 
+/// gRPC deleting ingredient request handler
+// #TODO: need to test
 func (s *BarMapService) DeleteIngredient(ctx context.Context, req *DeleteIngredientRequest) (*DeleteIngredientResponse, error) {
-	sql := fmt.Sprintf("delete from ingredients WHERE id = %s;", req.Id)
+	var sql string = "begin;\n"
+	sql += fmt.Sprintf("delete from ingredients WHERE id = %s;", req.Id)
+	sql += fmt.Sprintf("update drinks set ingredients_id = array_remove(ingredients_id, %s) WHERE %s = ANY(ingredients_id);\n", req.Id, req.Id)
+	sql += "commit;"
+
 	_, err := s.handler.conn.Exec(sql)
 	if err != nil {
 		log.Println("Deleting ingredient failed")
