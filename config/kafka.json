@@ -1,0 +1,6 @@
+{
+    "host": "localhost",
+    "producerTopic": "DrinkMapRequestsTopic",
+    "consumerTopic": "DrinkMapResponsesTopic",
+    "group.id": "DrinkMapGroup"
+}
