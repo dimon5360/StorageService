@@ -37,6 +37,6 @@ func main() {
 	var opts []grpc.ServerOption
 
 	grpcServer := grpc.NewServer(opts...)
-	postgres.RegisterBarMapServiceServer(grpcServer, postgres.NewServer("config/postgres.json", "config/create_tables.sql"))
+	postgres.RegisterBarMapServiceServer(grpcServer, postgres.NewServer("config/postgres.json", "config/DrinksDatabaseDiagram.sql"))
 	grpcServer.Serve(lis)
 }
