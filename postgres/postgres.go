@@ -55,17 +55,20 @@ func connectPostgres(conn_config PostgresConfig, initScriptPath string) *pgx.Con
 	})
 
 	if err != nil {
+		log.Println("Connection to database was failed")
 		panic(err)
 	}
 
 	c, err := ioutil.ReadFile(initScriptPath)
 	if err != nil {
+		log.Println("Initialize script is invalid")
 		panic(err)
 	}
 
 	sql := string(c)
 	_, err = conn.Exec(sql)
 	if err != nil {
+		log.Println("Creating tables was failed")
 		panic(err)
 	}
 	log.Println("Connection to database was succeed")
