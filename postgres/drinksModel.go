@@ -19,7 +19,7 @@ type drinkModel struct {
 	Type           DrinkType
 	Description    string
 	BarId          int32
-	Ingredients_Id pgtype.Int4Array
+	Ingredients_Id pgtype.Int8Array
 	CreatedAt      pgtype.Timestamp
 	UpdatedAt      pgtype.Timestamp
 }
@@ -29,7 +29,7 @@ const (
 	DEBUG_OUTPUT bool  = false
 )
 
-/// sql response wrapper
+// / sql response wrapper
 func WrapDrinkResponse(rows *pgx.Rows, err error) (*Drink, error) {
 
 	if err != nil {
@@ -68,8 +68,8 @@ func WrapDrinkResponse(rows *pgx.Rows, err error) (*Drink, error) {
 	}, nil
 }
 
-/// gRPC creating drink request handler
-/// established, remove comment later
+// / gRPC creating drink request handler
+// / established, remove comment later
 func (s *BarMapService) CreateDrink(ctx context.Context, req *CreateDrinkRequest) (*Drink, error) {
 
 	var now = time.Now().Format("2006-01-02 15:04:05.000000")
@@ -119,8 +119,8 @@ func (s *BarMapService) CreateDrink(ctx context.Context, req *CreateDrinkRequest
 	return WrapDrinkResponse(s.handler.conn.Query(fmt.Sprintf("select * from drinks where title = '%s' AND bar_id = '%s';", req.Title, req.BarId)))
 }
 
-/// gRPC updating drink request handler
-/// established, remove comment later
+// / gRPC updating drink request handler
+// / established, remove comment later
 func (s *BarMapService) UpdateDrink(ctx context.Context, req *UpdateDrinkRequest) (*Drink, error) {
 	var now = time.Now().Format("2006-01-02 15:04:05.000000")
 
@@ -131,8 +131,8 @@ func (s *BarMapService) UpdateDrink(ctx context.Context, req *UpdateDrinkRequest
 	return WrapDrinkResponse(s.handler.conn.Query(updateDrinkScript))
 }
 
-/// gRPC deleting drink request handler
-/// established, remove comment later
+// / gRPC deleting drink request handler
+// / established, remove comment later
 func (s *BarMapService) DeleteDrink(ctx context.Context, req *DeleteDrinkRequest) (*DeleteDrinkResponse, error) {
 
 	var sql string = "begin;\n"
@@ -148,14 +148,14 @@ func (s *BarMapService) DeleteDrink(ctx context.Context, req *DeleteDrinkRequest
 	return &DeleteDrinkResponse{}, nil
 }
 
-/// gRPC geting drinks' list request handler
+// / gRPC geting drinks' list request handler
 // #TODO: need to implement
 func (s *BarMapService) ListDrink(ctx context.Context, req *ListDrinksRequest) (*ListDrinksResponse, error) {
 	return &ListDrinksResponse{}, nil
 }
 
-/// gRPC getting drink request handler
-/// established, remove comment later
+// / gRPC getting drink request handler
+// / established, remove comment later
 func (s *BarMapService) GetDrink(ctx context.Context, req *GetDrinkRequest) (*Drink, error) {
 
 	var selectDrink string = fmt.Sprintf("select * from drinks where id = %s;", req.Id)

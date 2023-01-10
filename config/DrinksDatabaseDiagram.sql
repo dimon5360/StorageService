@@ -1,9 +1,4 @@
 
-
-CREATE TYPE DrinkType AS ENUM (
-  'LONG_DRINK', 'SHOT'
-);
-
 CREATE TABLE IF NOT EXISTS bars (
   id bigserial PRIMARY KEY,
   title varchar NOT NULL,
@@ -19,7 +14,7 @@ CREATE TABLE IF NOT EXISTS drinks (
   id bigserial PRIMARY KEY,
   title varchar NOT NULL,
   price int NOT NULL,
-  type DrinkType NOT NULL,
+  type int NOT NULL,
   description varchar NOT NULL,
   bar_id bigserial,
   ingredients_id bigint[],
@@ -34,7 +29,7 @@ CREATE TABLE IF NOT EXISTS ingredients (
   amount int NOT NULL,
   drink_id bigint,
   created_at timestamptz DEFAULT now(),
-  uupdated_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now(),
   UNIQUE (drink_id, title) 
 );
 
