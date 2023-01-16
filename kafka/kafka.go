@@ -14,7 +14,7 @@ type KafkaConfig struct {
 	Host          string `json:"host"`
 	ConsumerTopic string `json:"consumerTopic"`
 	ProducerTopic string `json:"producerTopic"`
-	GroupId       string `json:"group.id"`
+	GroupId       string `json:"groupid"`
 }
 
 type Handler struct {

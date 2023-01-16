@@ -29,7 +29,7 @@ const (
 	DEBUG_OUTPUT bool  = false
 )
 
-// / sql response wrapper
+// sql response wrapper
 func WrapDrinkResponse(rows *pgx.Rows, err error) (*Drink, error) {
 
 	if err != nil {
@@ -68,8 +68,8 @@ func WrapDrinkResponse(rows *pgx.Rows, err error) (*Drink, error) {
 	}, nil
 }
 
-// / gRPC creating drink request handler
-// / established, remove comment later
+// gRPC creating drink request handler
+// established, remove comment later
 func (s *BarMapService) CreateDrink(ctx context.Context, req *CreateDrinkRequest) (*Drink, error) {
 
 	var now = time.Now().Format("2006-01-02 15:04:05.000000")

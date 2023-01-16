@@ -1,6 +1,5 @@
 {
-    "host": "localhost",
-    "producerTopic": "DrinkMapRequestsTopic",
-    "consumerTopic": "DrinkMapResponsesTopic",
-    "group.id": "DrinkMapGroup"
+    "host": "localhost:29092",
+    "producerTopic": "BarmapDBTopic",
+    "group.id": "BarMapGroup"
 }
