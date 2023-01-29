@@ -25,7 +25,7 @@ const (
 
 func main() {
 
-	log.Printf("Database service v.%d.%d.%d.", MAJOR, MINOR, BUILD)
+	log.Printf("Storage service v.%d.%d.%d.", MAJOR, MINOR, BUILD)
 
 	var app appConfig
 	utils.ParseJsonConfig("config/server.json", &app)
